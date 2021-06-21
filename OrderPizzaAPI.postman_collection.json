@@ -61,13 +61,83 @@
 			"response": []
 		},
 		{
+			"name": "First Orders",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", () => {\r",
+							"  pm.expect(pm.response.code).to.eql(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Body is correct\", () => {\r",
+							"    var jsonData = pm.response.json()\r",
+							"    console.log(jsonData)\r",
+							"    if (jsonData.length < 1){\r",
+							"        console.log(\"length is none\")\r",
+							"        pm.globals.set(\"Order_ID\", 1)\r",
+							"    } else if (jsonData.length === 1){\r",
+							"        console.log(\"length is 1\")\r",
+							"        pm.globals.set(\"Order_ID\", jsonData[0].Order_ID)\r",
+							"        pm.globals.set(\"Table_No\", jsonData[0].Table_No + 1)\r",
+							"    } else{\r",
+							"        var lastOrder = jsonData[jsonData.length - 1].Order_ID\r",
+							"        pm.globals.set(\"Order_ID\", lastOrder + 1)\r",
+							"\r",
+							"        jsonData.sort(sortByProperty(\"Table_No\"))\r",
+							"        var highestTableNumber = jsonData[jsonData.length - 1].Table_No\r",
+							"        pm.globals.set(\"Table_No\", highestTableNumber + 1)\r",
+							"    }\r",
+							"})\r",
+							"\r",
+							"function sortByProperty(property){  \r",
+							"   return function(a,b){  \r",
+							"      if(a[property] > b[property])  \r",
+							"         return 1;  \r",
+							"      else if(a[property] < b[property])  \r",
+							"         return -1;  \r",
+							"  \r",
+							"      return 0;  \r",
+							"   }  \r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				},
+				"description": "{{url}}/api/orders"
+			},
+			"response": []
+		},
+		{
 			"name": "Add Order",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							""
+							"let body = {\r",
+							"        Crust: \"test\",\r",
+							"        Flavor: \"test\",\r",
+							"        Size: \"test\",\r",
+							"        Table_No: pm.globals.get(\"Table_No\")\r",
+							"}\r",
+							"pm.globals.set('body', JSON.stringify(body));"
 						],
 						"type": "text/javascript"
 					}
@@ -85,7 +155,7 @@
 							"    pm.expect(jsonData.Crust).to.equal(\"test\")\r",
 							"    pm.expect(jsonData.Flavor).to.equal(\"test\")\r",
 							"    pm.expect(jsonData.Size).to.equal(\"test\")\r",
-							"    pm.expect(jsonData.Table_No).to.equal(5)\r",
+							"    pm.expect(jsonData.Table_No).to.equal(pm.globals.get('Table_No'))\r",
 							"})"
 						],
 						"type": "text/javascript"
@@ -119,7 +189,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Crust\": \"test\",\n  \"Flavor\": \"test\",\n  \"Size\": \"test\",\n  \"Table_No\": 5\n}",
+					"raw": "{{body}}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -140,7 +210,7 @@
 			"response": []
 		},
 		{
-			"name": "Orders",
+			"name": "Second Orders",
 			"event": [
 				{
 					"listen": "test",
@@ -152,12 +222,25 @@
 							"\r",
 							"pm.test(\"Body is correct\", () => {\r",
 							"    var jsonData = pm.response.json()\r",
-							"    console.log(jsonData)\r",
-							"    pm.expect(jsonData[0].Crust).to.equal(\"test\")\r",
-							"    pm.expect(jsonData[0].Flavor).to.equal(\"test\")\r",
-							"    pm.expect(jsonData[0].Size).to.equal(\"test\")\r",
-							"    pm.expect(jsonData[0].Table_No).to.equal(5)\r",
-							"})"
+							"\r",
+							"    results = []\r",
+							"    var searchField = \"Order_ID\";\r",
+							"    var searchVal = pm.globals.get(\"Order_ID\");\r",
+							"    for (var i=0 ; i < jsonData.length ; i++)\r",
+							"        {\r",
+							"            console.log(searchField)\r",
+							"            console.log(searchVal)\r",
+							"            if (jsonData[i][searchField] == searchVal) {\r",
+							"                results.push(jsonData[i]);\r",
+							"                pm.expect(results[0].Crust).to.equal(\"test\"),\r",
+							"\t\t\t\tpm.expect(results[0].Flavor).to.equal(\"test\"),\r",
+							"\t\t\t\tpm.expect(results[0].Size).to.equal(\"test\"),\r",
+							"\t\t\t\tpm.expect(results[0].Table_No).to.equal(pm.globals.get('Table_No') - 1)\r",
+							"        }\r",
+							"    }\r",
+							"})\r",
+							"\r",
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -230,19 +313,13 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{url}}/orders/1?Order_ID=1",
+					"raw": "{{url}}/orders/{{Order_ID}}",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"orders",
-						"1"
-					],
-					"query": [
-						{
-							"key": "Order_ID",
-							"value": "1"
-						}
+						"{{Order_ID}}"
 					]
 				},
 				"description": "{{url}}/api/orders/1"

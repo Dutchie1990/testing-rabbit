@@ -28,15 +28,11 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-
+    
     - name: Run API Tests
       id: run-newman
       uses: anthonyvscode/newman-action@v1
-        with:
+      with:
           collection: OrderPizzaAPI.postman_collection.json
           reporters: cli
 

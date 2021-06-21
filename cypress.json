@@ -1,0 +1,7 @@
+{
+    "baseUrl":"https://staging-finance.rabbitinternet.com/",
+    "video": false,
+    "chromeWebSecurity": false,
+    "viewportWidth": 1600,
+	"viewportHeight": 1200
+}

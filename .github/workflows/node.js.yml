@@ -21,6 +21,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Run API Tests
+      id: run-newman
+      uses: anthonyvscode/newman-action@v1
+      with:
+          collection: OrderPizzaAPI.postman_collection.json
+          reporters: cli
+
+    - name: Output summary to console
+      run: echo ${{ steps.run-newman.outputs.summary }}
+    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
@@ -28,17 +39,5 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-
-    - name: Run API Tests
-      id: run-newman
-      uses: anthonyvscode/newman-action@v1
-        with:
-          collection: OrderPizzaAPI.postman_collection.json
-          reporters: cli
-
-    - name: Output summary to console
-      run: echo ${{ steps.run-newman.outputs.summary }}
+    
+    
